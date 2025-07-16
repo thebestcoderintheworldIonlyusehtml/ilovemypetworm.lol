@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Viewer Discretion + Slideshow</title>
+  <style>
+    /* Overlay */
+    #overlay {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    #overlay .prompt {
+      color: #fff; text-align: center; font-family: sans-serif;
+    }
+    #overlay button {
+      margin: 0 0.5em; padding: 0.5em 1em;
+      font-size: 1rem; cursor: pointer;
+    }
+
+    /* Video container */
+    #videoContainer {
+      display: none;
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      z-index: 999;
+    }
+    #introVideo {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    /* Main site (slideshow) */
+    #mainContent {
+      display: none;
+      width: 100%; height: 100vh;
+      overflow: hidden;
+      position: relative;
+      background: #111;
+    }
+    #slideshow {
+      width: 100%; height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1) Overlay Prompt -->
+  <div id="overlay">
+    <div class="prompt">
+      <p>Viewer discretion is advised.<br/>Do you wish to enter?</p>
+      <button id="yesBtn">Yes</button>
+      <button id="noBtn">No</button>
+    </div>
+  </div>
+
+  <!-- 2) Full-screen Video + Music -->
+  <div id="videoContainer">
+    <video id="introVideo" src="aura.mp4" playsinline></video>
+    <audio id="bgMusic" src="If We Being Real [Official Audio].mp3" loop></audio>
+  </div>
+
+  <!-- 3) Main Site: GIF Slideshow -->
+  <div id="mainContent">
+    <img id="slideshow" src="" alt="Slideshow GIF" />
+  </div>
+
+  <script>
+    const overlay   = document.getElementById('overlay');
+    const yesBtn    = document.getElementById('yesBtn');
+    const noBtn     = document.getElementById('noBtn');
+    const videoCont = document.getElementById('videoContainer');
+    const video     = document.getElementById('introVideo');
+    const music     = document.getElementById('bgMusic');
+    const main      = document.getElementById('mainContent');
+    const slideImg  = document.getElementById('slideshow');
+
+    // Replace with your list of GIF URLs
+    const gifs = [
+      'https://media.discordapp.net/attachments/1014318335900524555/1040727583366598706/caption-9-1.gif?ex=68795f97&is=68780e17&hm=f79a4749f74a3513b3c1e699ea20ed2e72d5cda8e1d8736613a01385707cd2b9&',
+      'https://media.discordapp.net/attachments/992767957514059926/1079119759498551441/Hot_Dog.gif?ex=68794c17&is=6877fa97&hm=58b084e92633a325d4dfd295346bdd3fba4944365625f50e0171b858f9c40da2&',
+      'https://cdn.discordapp.com/attachments/1129481865204604931/1179404277702201444/HYMORyHz.gif?ex=6878f1d4&is=6877a054&hm=fa5619f688f1a113f904472bd8e523efe4e28f2279e116963587dd74a183ec29&',
+      'https://cdn.discordapp.com/attachments/1152058724123422741/1184765268770160690/caption.gif?ex=687954e3&is=68780363&hm=43dc1a5e18a0d90aa9034ed1c265abe12681822c724a554436a718852b2ade6d&',
+      'https://media.discordapp.net/attachments/878431660822110238/1150082511838380202/itsy-1.gif?ex=68790f4e&is=6877bdce&hm=2feca06d1c2fe9e3c66277ac3f8cc631870e0e372ddffd7af04a66561835a321&',
+      'https://cdn.discordapp.com/attachments/1275836529880862831/1322016193887862845/attachment-74BE5.gif?ex=6878fd46&is=6877abc6&hm=56acf4ae12892e517e1eba2d2ebbc3ed12acd9de11dc9b4012f4e28c0d110e3e&',
+      'https://media.discordapp.net/attachments/902523655278428180/1052904984284495933/IMG_6775.gif?ex=6878d9ae&is=6877882e&hm=397c2619cb524bbffca5ecbefbbe4223bf121fc0f3773707a7df7b8cf39acf6c&'
+    ];
+    let gifIndex = 0;
+    let slideshowInterval;
+
+    // “No” button: try to close or blank
+    noBtn.addEventListener('click', () => {
+      window.open('', '_self');
+      window.close();
+      setTimeout(() => window.location.href = 'about:blank', 500);
+    });
+
+    // “Yes” button: start video + music
+    yesBtn.addEventListener('click', () => {
+      overlay.style.display = 'none';
+      videoCont.style.display = 'block';
+
+      // Full-screen request
+      const fs = videoCont;
+      if (fs.requestFullscreen) fs.requestFullscreen();
+      else if (fs.webkitRequestFullscreen) fs.webkitRequestFullscreen();
+      else if (fs.msRequestFullscreen) fs.msRequestFullscreen();
+
+      // Play both media
+      Promise.all([video.play(), music.play()])
+        .catch(err => console.warn('Play blocked:', err));
+    });
+
+    // When video ends → teardown and show slideshow
+    video.addEventListener('ended', () => {
+      // Exit full-screen
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+
+      // Hide video container
+      videoCont.style.display = 'none';
+
+      // Show main content & start GIF slideshow
+      main.style.display = 'block';
+      slideImg.src = gifs[0];
+      slideshowInterval = setInterval(() => {
+        gifIndex = (gifIndex + 1) % gifs.length;
+        slideImg.src = gifs[gifIndex];
+      }, 3000); // change every 3s
+    });
+  </script>
+
+</body>
+</html>
